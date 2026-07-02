@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0e3b2e">
+<meta name="format-detection" content="telephone=no">
+<title>Portugal Golf Trip — Ryder Cup Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --turf-deep:#0e3b2e;
+    --turf-mid:#154a39;
+    --turf-line:#2b6650;
+    --cream:#f3edd8;
+    --ink:#132018;
+    --navy:#22528f;
+    --navy-deep:#173a68;
+    --maroon:#8f2c3f;
+    --maroon-deep:#6b1f2f;
+    --gold:#cfa53e;
+    --gray:#8a8f7f;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:var(--turf-deep);
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 40px);
+    color:var(--cream);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:calc(60px + env(safe-area-inset-bottom));
+    padding-left:env(safe-area-inset-left);
+    padding-right:env(safe-area-inset-right);
+    overscroll-behavior-y:none;
+  }
+  button, .rbtn, .chip, #drawBtn{
+    touch-action:manipulation;
+    -webkit-user-select:none;
+    user-select:none;
+  }
+  h1,h2,h3,.num{font-family:'Oswald',sans-serif; text-transform:uppercase; letter-spacing:0.02em;}
+  .wrap{max-width:520px; margin:0 auto; padding:0 14px;}
+
+  /* HEADER */
+  header{
+    padding:26px 14px 18px;
+    text-align:center;
+    border-bottom:3px solid var(--gold);
+  }
+  header .eyebrow{font-size:12px; letter-spacing:0.18em; color:var(--gold); font-weight:600; text-transform:uppercase;}
+  header h1{font-size:26px; margin:6px 0 4px; line-height:1.1;}
+  header .courses{font-size:13px; color:#cfd8c9; line-height:1.5;}
+
+  /* SCOREBOARD BAR (sticky signature element) */
+  .scoreboard{
+    position:sticky; top:0; z-index:20;
+    background:var(--ink);
+    border-bottom:2px solid var(--gold);
+    display:flex; align-items:stretch;
+    box-shadow:0 4px 12px rgba(0,0,0,0.35);
+    padding-top:env(safe-area-inset-top);
+  }
+  .sb-side{flex:1; padding:10px 8px; text-align:center;}
+  .sb-side.blue{background:linear-gradient(180deg,var(--navy),var(--navy-deep));}
+  .sb-side.red{background:linear-gradient(180deg,var(--maroon),var(--maroon-deep));}
+  .sb-label{font-size:10px; letter-spacing:0.14em; opacity:0.85; font-family:'Inter',sans-serif; font-weight:600;}
+  .sb-score{font-family:'Oswald',sans-serif; font-size:28px; font-weight:600; line-height:1.1;}
+  .sb-mid{width:44px; display:flex; align-items:center; justify-content:center; font-size:11px; color:#a9b0a0; font-weight:600; background:#0b1610;}
+
+  section{margin-top:18px;}
+  .card{
+    background:var(--turf-mid);
+    border:1px solid var(--turf-line);
+    border-radius:10px;
+    padding:14px;
+    margin-bottom:12px;
+  }
+  details.card summary{cursor:pointer; font-family:'Oswald',sans-serif; font-size:15px; text-transform:uppercase; letter-spacing:0.03em; list-style:none;}
+  details.card summary::-webkit-details-marker{display:none;}
+  details.card summary::after{content:'+'; float:right; font-size:18px; color:var(--gold);}
+  details.card[open] summary::after{content:'–';}
+  details.card p, details.card table{margin-top:10px; font-size:13.5px; line-height:1.55; color:#dfe6d6;}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  table th, table td{text-align:left; padding:5px 6px; border-bottom:1px solid var(--turf-line);}
+  table th{color:var(--gold); font-weight:600; font-size:11px; letter-spacing:0.05em; text-transform:uppercase;}
+  .pt{font-family:'Oswald',sans-serif;}
+
+  /* DRAW BUTTON */
+  .draw-wrap{text-align:center; margin:20px 0;}
+  #drawBtn{
+    background:var(--gold);
+    color:var(--ink);
+    border:none;
+    font-family:'Oswald',sans-serif;
+    font-size:17px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    padding:14px 28px;
+    border-radius:8px;
+    font-weight:600;
+    box-shadow:0 4px 0 #8a7126;
+    cursor:pointer;
+  }
+  #drawBtn:active{transform:translateY(3px); box-shadow:none;}
+  .draw-hint{font-size:12px; color:#a9b0a0; margin-top:8px;}
+
+  /* TEAM ROSTER */
+  .teams-row{display:flex; gap:10px;}
+  .team-box{flex:1; border-radius:10px; padding:12px; }
+  .team-box.blue{background:linear-gradient(160deg,var(--navy),var(--navy-deep)); border:1px solid #3a6fb8;}
+  .team-box.red{background:linear-gradient(160deg,var(--maroon),var(--maroon-deep)); border:1px solid #b1495f;}
+  .team-box h3{font-size:14px; margin:0 0 8px; color:var(--cream);}
+  .team-box ul{list-style:none; margin:0; padding:0; font-size:13px;}
+  .team-box li{padding:3px 0; display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.12);}
+  .team-box li:last-child{border-bottom:none;}
+  .team-box .hcp{opacity:0.75; font-family:'Oswald',sans-serif;}
+
+  /* COURSE SECTION */
+  .course-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px;}
+  .course-head h2{font-size:18px; margin:0;}
+  .course-num{color:var(--gold); font-size:12px; font-weight:600;}
+
+  .nine-label{font-size:11px; letter-spacing:0.12em; color:var(--gold); text-transform:uppercase; font-weight:600; margin:14px 0 6px;}
+
+  .matchgroup{border:1px solid var(--turf-line); border-radius:8px; padding:10px; margin-bottom:10px; background:#0f3327;}
+  .fb-row{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+  .pair{flex:1; font-size:12.5px; line-height:1.4;}
+  .pair .side-tag{font-size:9px; letter-spacing:0.1em; font-weight:700; text-transform:uppercase; padding:1px 6px; border-radius:3px; display:inline-block; margin-bottom:3px;}
+  .side-tag.blue{background:var(--navy); color:#dbe8ff;}
+  .side-tag.red{background:var(--maroon); color:#ffe0e5;}
+  .vs{font-family:'Oswald',sans-serif; color:var(--gold); font-size:13px; padding:0 2px;}
+
+  .btnrow{display:flex; gap:5px;}
+  .rbtn{
+    flex:1; min-height:44px; display:flex; align-items:center; justify-content:center;
+    padding:7px 3px; font-size:12px; border-radius:6px; border:1px solid var(--turf-line);
+    background:#0b271d; color:#cfe6d8; font-weight:600; text-align:center; cursor:pointer; font-family:'Inter',sans-serif;
+  }
+  .rbtn.active-blue{background:var(--navy); border-color:#3a6fb8; color:#fff;}
+  .rbtn.active-red{background:var(--maroon); border-color:#b1495f; color:#fff;}
+  .rbtn.active-halve{background:var(--gray); border-color:#a9ad9c; color:#1c1f15;}
+
+  /* MANUAL DRAW CHIPS */
+  #manualSetup{display:none;}
+  .chip-grid{display:flex; flex-wrap:wrap; gap:6px;}
+  .chip{
+    min-height:44px; min-width:74px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:6px 8px; border-radius:8px; font-size:12px; font-weight:600; text-align:center; line-height:1.3;
+    border:1px solid var(--turf-line); cursor:pointer;
+  }
+  .chip-sm{min-height:38px; min-width:0; flex:1 1 auto; padding:6px 4px;}
+  .chip-none{background:#0b271d; color:#cfe6d8;}
+  .chip-blue{background:var(--navy); border-color:#3a6fb8; color:#fff;}
+  .chip-red{background:var(--maroon); border-color:#b1495f; color:#fff;}
+  .chip-blocked{background:#2a1010; border-color:#7a2020; color:#a56060; opacity:0.55; cursor:not-allowed; pointer-events:none;}
+  .startbtn{
+    background:var(--gold); color:var(--ink); border:none; font-family:'Oswald',sans-serif;
+    font-size:16px; letter-spacing:0.04em; text-transform:uppercase; padding:14px 24px; border-radius:8px;
+    font-weight:600; box-shadow:0 4px 0 #8a7126; cursor:pointer; min-height:44px;
+  }
+  .startbtn:active{transform:translateY(3px); box-shadow:none;}
+
+  @keyframes sirenFlash{
+    0%,100%{background:#3a0d0d; border-color:#ff4d4d;}
+    50%{background:#8a1a1a; border-color:#ffb3b3;}
+  }
+  .warn-siren{
+    background:#3a0d0d; border:2px solid #ff4d4d; color:#ffe2e2; font-weight:700; font-size:13px;
+    padding:10px 12px; border-radius:8px; margin-top:8px; text-align:center; line-height:1.4;
+    animation:sirenFlash 0.9s infinite;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .warn-siren{ animation:none; background:#8a1a1a; }
+  }
+  .estimate-red{ color:#ff6b6b; font-weight:700; }
+
+  .singles-row{border-top:1px dashed var(--turf-line); padding-top:8px; margin-top:6px;}
+  .singles-title{font-size:10px; color:#9fb5a6; letter-spacing:0.08em; margin-bottom:4px; text-transform:uppercase;}
+
+  .pending-msg{font-size:12px; color:#a9b0a0; font-style:italic; padding:6px 0;}
+
+  .bracket-result{
+    margin-top:6px; font-size:12px; padding:6px 8px; border-radius:6px; background:#0b271d; color:var(--gold); font-weight:600;
+  }
+
+  /* LEADERBOARDS */
+  .lb-table td:last-child, .lb-table th:last-child{text-align:right;}
+  .lb-table td.pname{font-weight:600;}
+
+  .prize-list{font-size:13px; line-height:1.7;}
+  .prize-list b{color:var(--gold);}
+
+  footer{text-align:center; font-size:11px; color:#7f867a; padding:24px 14px 10px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Golf Trip 2026 · Algarve</div>
+  <h1>Ryder Cup Tracker</h1>
+  <div class="courses">Quinta do Lago — North (Sat) &nbsp;·&nbsp; Vilamoura — Old Course (Sun) &nbsp;·&nbsp; Quinta do Lago — Laranjal (Mon)<br><span style="font-size:11px; opacity:0.7;">Forward / Mens tees</span></div>
+</header>
+
+<div class="scoreboard" id="scoreboard">
+  <div class="sb-side blue">
+    <div class="sb-label">Team Blue</div>
+    <div class="sb-score" id="sbBlue">0</div>
+  </div>
+  <div class="sb-mid">PTS</div>
+  <div class="sb-side red">
+    <div class="sb-label">Team Red</div>
+    <div class="sb-score" id="sbRed">0</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<section>
+  <details class="card">
+    <summary>How the format &amp; points work</summary>
+    <p>
+      Every 9 holes is its own match. Front 9: your fixed pairing plays a <b>4BBB (better-ball)</b> match against the opposite team's pairing, worth <b>2 team points</b>. Concurrently, two <b>9-hole singles</b> run inside that same four-ball — 1 point personal + 0.5 team point per singles win.<br><br>
+      Back 9 rebrackets: if both front-9 four-balls finished decisively, winning pairs meet for the daily title, losing pairs meet for the wooden spoon. If either front-9 four-ball is halved, both groups simply replay the same pairing on the back 9 — no rebracket that day.<br><br>
+      Each teammate is partnered with you exactly once across the 3 courses (round-robin pairing) — every combination happens once, nobody repeats.
+    </p>
+  </details>
+
+  <details class="card" open>
+    <summary>Format settings</summary>
+    <p style="margin-top:0;">Turn the singles side-game on or off — off means pure 4BBB, team points only. Doesn't lose any results already entered; flip it back on and they reappear.</p>
+    <div class="btnrow" style="margin-top:10px;">
+      <div class="rbtn" id="singlesOnBtn" style="flex:1;">4BBB + Singles</div>
+      <div class="rbtn" id="singlesOffBtn" style="flex:1;">4BBB only</div>
+    </div>
+    <div id="formatStatus" style="margin-top:8px; font-size:12px; color:var(--gold); font-weight:600;"></div>
+    <p style="margin-top:12px; font-size:12.5px; color:#a9b0a0;">If you end up going with a Shambles format instead, say the word and I'll build that in as its own mode — happy to keep it at the same 90% allowance for consistency.</p>
+  </details>
+
+  <details class="card">
+    <summary>Player indexes (editable)</summary>
+    <p>Update anyone's index here if they play before the trip — everything recalculates automatically, including the tables below and any live matches already in progress.</p>
+    <div id="indexEditor"></div>
+  </details>
+
+  <details class="card">
+    <summary>Handicap allowances used here</summary>
+    <p>You (Mark) play off scratch — everyone else's shots are the gap to your index, scaled by that course's Slope Rating, at a 90% allowance. This is now used for <b>both</b> four-ball and singles, so it's one number per player per course. Shots are taken on that 9's hardest-ranked holes (the stroke index on the card).<br><br>
+    <b>Daily Champions lose 1 shot, Daily Wooden Spoon gains 1 shot</b> — applied from the next course onward once that day's back-9 rebracket is decided. These tables show the pre-trip baseline before any of that kicks in; the live match cards below adjust automatically as results come in.</p>
+    <div id="hcpTablesContainer"></div>
+  </details>
+
+  <details class="card">
+    <summary>Trip info — flights, hotel, transfers</summary>
+    <p style="margin-top:0;"><b>Getting to the airport</b></p>
+    <p>Meet at Wirral RFC — arrive 03:10, taxi leaves 03:15 (Friday 3 Jul)</p>
+
+    <p><b>Flights</b></p>
+    <p>Out: Fri 3 Jul 2026 · easyJet EZY3421 · Liverpool 06:05 → Faro 09:00 (ref KCJW65B)<br>
+    Back: Tue 7 Jul 2026 · easyJet EJU7501 · Faro 14:15 → Manchester 17:20 (ref KCJW824)</p>
+
+    <p><b>Hotel</b></p>
+    <p>Vila Galé Marina · check in Fri 3 Jul · check out Tue 7 Jul (4 nights) · Bed & Breakfast · 4 twin rooms</p>
+
+    <p><b>Airport transfers</b> — ATS Private Transfers, 8 pax</p>
+    <p>Arrival 03/07: pick up 09:00 from Faro Airport → Vila Galé Marina<br>
+    Departure 07/07: pick up 11:15 from Vila Galé Marina → Faro Airport<br>
+    ATS emergency contact: 00351 917250405 — they wait outside "Clubs To Hire"</p>
+
+    <p><b>Golf transfers</b></p>
+    <p>Sat 4 Jul (North): pick up 09:40, return 20:00 (was 17:00) from Quinta do Lago North Clubhouse <span class="estimate-red">(TBD)</span><br>
+    Sun 5 Jul (Vilamoura Old): arrange via hotel reception — no fixed time booked. <span class="estimate-red">Estimate only: pick up ≈10:15, return ≈17:30</span> (based on drive time + the buffer pattern from the other two days — not confirmed)<br>
+    Mon 6 Jul (Laranjal): pick up 10:30, return 18:00</p>
+
+    <p><b>Tee times</b> — booking shows the first tee time for the group; since it's 8 of you (2 four-balls), the second four-ball is an <i>estimated</i> ~10 minutes behind, not confirmed</p>
+    <p>Sat 4 Jul North: 11:04 (Group 2 ≈ 11:14)<br>
+    Sun 5 Jul Vilamoura Old: 11:36 (Group 2 ≈ 11:46)<br>
+    Mon 6 Jul Laranjal: 12:00 (Group 2 ≈ 12:10)</p>
+
+    <p><b>Booking &amp; support</b></p>
+    <p>Golf Holidays Direct ref: 6977921 · Group size 8, paid in full<br>
+    Personal sales agent: Freddie Moriarty<br>
+    Office: +44 (0)800 9752 686 (Mon–Fri 9am–7pm, Sat–Sun 9am–4pm)<br>
+    ATOL protected (11357) · balance held in trust</p>
+  </details>
+
+  <details class="card">
+    <summary>Prize pot — £300 budget</summary>
+    <div class="prize-list">
+      <b>Winning Ryder Cup team</b> — 4 players × ~€35<br>
+      <b>Overall singles champion</b> — 1 player × ~€50<br>
+      <b>Daily bracket winners</b> — 6 players total (2 per day) × ~€25
+    </div>
+  </details>
+</section>
+
+<div class="draw-wrap">
+  <div style="display:flex; gap:10px; justify-content:center;">
+    <button id="drawBtn">🎲 Random Draw</button>
+    <button id="manualBtn" style="background:transparent; color:var(--gold); border:2px solid var(--gold); font-family:'Oswald',sans-serif; font-size:15px; letter-spacing:0.03em; text-transform:uppercase; padding:12px 20px; border-radius:8px; font-weight:600; cursor:pointer; min-height:44px;">✍️ Our Own Draw</button>
+  </div>
+  <div class="draw-hint">Random Draw shuffles everything for you.<br>Our Own Draw lets you set teams and every pairing by hand.</div>
+</div>
+
+<div id="manualSetup"></div>
+
+<div id="app"></div>
+
+<section id="lbSection" style="display:none;">
+  <div class="card">
+    <h3 style="margin-top:0;">Singles Leaderboard</h3>
+    <table class="lb-table" id="singlesLB"><tr><th>Player</th><th>Pts</th></tr></table>
+  </div>
+</section>
+
+</div>
+
+<footer>
+  Saved automatically on this phone as you go — reopening this same link on this device picks up right where you left off.<br>
+  <button id="resetBtn" style="margin-top:10px; background:transparent; color:#c97a7a; border:1px solid #7a2020; font-family:'Inter',sans-serif; font-size:11px; padding:8px 14px; border-radius:6px; cursor:pointer; min-height:36px;">Reset everything</button>
+</footer>
+
+<script>
+const COURSES = [
+  {name:"Quinta do Lago — North",      tee:"Yellow / Men's Standard",     cr:69.9, sr:126, par:72,
+   date:"Sat 4 Jul 2026", teeTime:"11:04", teeTimeGroup2Est:"11:14",
+   transferPickup:"09:40", transferReturn:"20:00", transferReturnWas:"17:00",
+   transferReturnLocation:"Quinta do Lago North Clubhouse", transferReturnTBD:true, transferNote:null},
+  {name:"Vilamoura — Old Course",      tee:"Yellow (Mens)",               cr:71.4, sr:133, par:73,
+   date:"Sun 5 Jul 2026", teeTime:"11:36", teeTimeGroup2Est:"11:46",
+   transferPickup:null, transferReturn:null,
+   transferNote:"Arrange via hotel reception — no fixed pickup time booked",
+   transferPickupEst:"10:15", transferReturnEst:"17:30"},
+  {name:"Quinta do Lago — Laranjal",   tee:"Gold / Yellow (Mens)",        cr:71.1, sr:130, par:72,
+   date:"Mon 6 Jul 2026", teeTime:"12:00", teeTimeGroup2Est:"12:10",
+   transferPickup:"10:30", transferReturn:"18:00", transferNote:null}
+];
+const BASE_PLAYERS = [
+  {name:"Mark Gidman",   hcp:8.8},
+  {name:"Daniel Harvey", hcp:14.4},
+  {name:"Craig Harvey",  hcp:10.5},
+  {name:"Ross Page",     hcp:13.2},
+  {name:"Jamie Moore",   hcp:12.4},
+  {name:"Ben Cornford",  hcp:11.3},
+  {name:"Zac Rashid",    hcp:11.2},
+  {name:"Jimmy Annetts", hcp:18.2}
+];
+const LOWEST_HCP = 8.8;
+const ALLOWANCE = 0.9; // same allowance used for both formats, per Mark's request
+let state = null; // {teamBlue, teamRed, blueRounds, redRounds, results:{}}
+let manualState = null;
+let singlesEnabled = true; // format switch: off = pure 4BBB team format, no singles side-game
+
+// World Handicap System: Course Handicap = Index x (Slope/113) + (Course Rating - Par)
+function courseHandicap(hcp, course){ return hcp*(course.sr/113) + (course.cr-course.par); }
+
+// Works out who was Daily Champions / Wooden Spoon for a given course, if that day's back-9
+// rebracket has been decided. Returns null for either side until it's determined.
+function getDailyResult(ci){
+  if(!state) return {champions:null, spoon:null};
+  const b = backGroups(ci);
+  if(b.mode!=='rebracket') return {champions:null, spoon:null};
+  const wRes = getRes(`c${ci}-back-winners-fourball`);
+  const lRes = getRes(`c${ci}-back-losers-fourball`);
+  const champions = (wRes && wRes!=='halve') ? (wRes==='a'?b.winners.pairA:b.winners.pairB).map(p=>p.name) : null;
+  const spoon = (lRes && lRes!=='halve') ? (lRes==='a'?b.losers.pairB:b.losers.pairA).map(p=>p.name) : null;
+  return {champions, spoon};
+}
+
+// Base index (with any manual override) plus -1/+1 per prior course's Daily Champion / Wooden Spoon result
+function effectiveIndex(name, ci){
+  let idx = BASE_PLAYERS.find(p=>p.name===name).hcp;
+  for(let k=0; k<ci; k++){
+    const dr = getDailyResult(k);
+    if(dr.champions && dr.champions.includes(name)) idx -= 1;
+    if(dr.spoon && dr.spoon.includes(name)) idx += 1;
+  }
+  return idx;
+}
+
+function getAdjustmentSummary(ci){
+  const notes = [];
+  BASE_PLAYERS.forEach(p=>{
+    const adj = effectiveIndex(p.name, ci) - p.hcp;
+    if(adj !== 0) notes.push(`${p.name.split(' ')[0]} ${adj>0?'+':''}${adj}`);
+  });
+  return notes;
+}
+
+// Shots off Mark (lowest index) for a given course, including any daily adjustments —
+// the (CR-Par) term cancels since it's the same for both players on the same tee, so this
+// reduces to the index gap scaled by that course's slope, at the group's 90% allowance.
+// Used for BOTH four-ball and singles now, by request — one number per player per course.
+function strokesOffMark(name, ci){
+  const course = COURSES[ci];
+  const markEff = effectiveIndex('Mark Gidman', ci);
+  const eff = effectiveIndex(name, ci);
+  return Math.round((eff-markEff)*(course.sr/113)*ALLOWANCE/2);
+}
+function fourballStrokes(name, ci){ return strokesOffMark(name, ci); }
+function singlesStrokes(name, ci){ return strokesOffMark(name, ci); }
+
+// fill per-course handicap reference tables (pre-tournament baseline — daily adjustments aren't known yet)
+function refreshHcpTables(){
+  const container = document.getElementById('hcpTablesContainer');
+  if(!container) return;
+  container.innerHTML = COURSES.map((course, ci)=>{
+    const sorted = BASE_PLAYERS.slice().sort((a,b)=>a.hcp-b.hcp);
+    const rows = sorted.map(p=>`<tr><td>${p.name}</td><td>${p.hcp}</td><td>${strokesOffMark(p.name, ci)}</td></tr>`).join('');
+    return `<p style="margin-top:14px; color:var(--gold); font-weight:600; font-size:12px; text-transform:uppercase;">${course.date} · ${course.name} · SR ${course.sr} · CR ${course.cr}</p>
+      <table><tr><th>Player</th><th>Index</th><th>Shots off Mark (9h)</th></tr>${rows}</table>`;
+  }).join('');
+}
+refreshHcpTables();
+
+// editable index override panel
+function renderIndexEditor(){
+  const el = document.getElementById('indexEditor');
+  if(!el) return;
+  el.innerHTML = BASE_PLAYERS.map(p=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--turf-line);">
+      <span style="font-size:13px;">${p.name}</span>
+      <input type="number" step="0.1" value="${p.hcp}" data-hcp-input="${p.name}" inputmode="decimal"
+        style="width:72px; background:#0b271d; color:var(--cream); border:1px solid var(--turf-line); border-radius:6px; padding:8px 6px; font-size:14px; text-align:center; min-height:36px;">
+    </div>
+  `).join('');
+}
+renderIndexEditor();
+
+function renderFormatStatus(){
+  const statusEl = document.getElementById('formatStatus');
+  const onBtn = document.getElementById('singlesOnBtn');
+  const offBtn = document.getElementById('singlesOffBtn');
+  if(!statusEl || !onBtn || !offBtn) return;
+  onBtn.className = 'rbtn' + (singlesEnabled ? ' active-blue' : '');
+  offBtn.className = 'rbtn' + (!singlesEnabled ? ' active-blue' : '');
+  statusEl.textContent = singlesEnabled
+    ? 'Currently ON — 4BBB + singles side-game'
+    : 'Currently OFF — pure 4BBB team format only';
+}
+renderFormatStatus();
+
+document.getElementById('singlesOnBtn').addEventListener('click', ()=>{
+  singlesEnabled = true;
+  saveSettings();
+  renderFormatStatus();
+  if(state) render();
+});
+document.getElementById('singlesOffBtn').addEventListener('click', ()=>{
+  singlesEnabled = false;
+  saveSettings();
+  renderFormatStatus();
+  if(state) render();
+});
+
+document.body.addEventListener('change', (e)=>{
+  const inp = e.target.closest('[data-hcp-input]');
+  if(!inp) return;
+  const val = parseFloat(inp.value);
+  if(isNaN(val)) return;
+  const player = BASE_PLAYERS.find(p=>p.name===inp.dataset.hcpInput);
+  player.hcp = val;
+  saveHcpOverrides();
+  refreshHcpTables();
+  if(state) render();
+  if(manualState) renderManual();
+});
+
+/* ---------- PERSISTENCE (localStorage) ----------
+   Only works when opened as a real webpage (e.g. your GitHub Pages link) — silently
+   no-ops if previewed inside Claude's own artifact viewer, where storage is blocked. */
+const LS_HCP = 'golfTrip_hcpOverrides';
+const LS_STATE = 'golfTrip_state';
+const LS_MANUAL = 'golfTrip_manualState';
+const LS_SETTINGS = 'golfTrip_settings';
+
+function saveSettings(){
+  try{ localStorage.setItem(LS_SETTINGS, JSON.stringify({ singlesEnabled })); }catch(e){}
+}
+
+function saveHcpOverrides(){
+  try{
+    const overrides = {};
+    BASE_PLAYERS.forEach(p=>overrides[p.name]=p.hcp);
+    localStorage.setItem(LS_HCP, JSON.stringify(overrides));
+  }catch(e){ /* storage unavailable in this context — carries on in-memory only */ }
+}
+
+function saveState(){
+  try{
+    if(!state){ localStorage.removeItem(LS_STATE); return; }
+    const d = {
+      teamBlueNames: state.teamBlue.map(p=>p.name),
+      teamRedNames: state.teamRed.map(p=>p.name),
+      blueRoundsNames: state.blueRounds.map(r=>r.map(pair=>pair.map(p=>p.name))),
+      redRoundsNames: state.redRounds.map(r=>r.map(pair=>pair.map(p=>p.name))),
+      results: state.results
+    };
+    localStorage.setItem(LS_STATE, JSON.stringify(d));
+  }catch(e){}
+}
+
+function saveManualState(){
+  try{
+    if(!manualState){ localStorage.removeItem(LS_MANUAL); return; }
+    localStorage.setItem(LS_MANUAL, JSON.stringify(manualState));
+  }catch(e){}
+}
+
+function clearManualStorage(){ try{ localStorage.removeItem(LS_MANUAL); }catch(e){} }
+function clearStateStorage(){ try{ localStorage.removeItem(LS_STATE); }catch(e){} }
+
+function resetEverything(){
+  try{ localStorage.removeItem(LS_HCP); localStorage.removeItem(LS_STATE); localStorage.removeItem(LS_MANUAL); localStorage.removeItem(LS_SETTINGS); }catch(e){}
+  location.reload();
+}
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function roundRobin(team){
+  const [p0,p1,p2,p3] = team;
+  return [
+    [[p0,p1],[p2,p3]],
+    [[p0,p2],[p1,p3]],
+    [[p0,p3],[p1,p2]]
+  ];
+}
+
+document.getElementById('drawBtn').addEventListener('click', ()=>{
+  const shuffled = shuffle(BASE_PLAYERS);
+  const teamBlue = shuffled.slice(0,4);
+  const teamRed  = shuffled.slice(4,8);
+  state = {
+    teamBlue, teamRed,
+    blueRounds: roundRobin(teamBlue),
+    redRounds: roundRobin(teamRed),
+    results: {}
+  };
+  manualState = null;
+  clearManualStorage();
+  saveState();
+  document.getElementById('manualSetup').style.display='none';
+  document.getElementById('manualSetup').innerHTML='';
+  document.getElementById('lbSection').style.display='block';
+  render();
+});
+
+/* ---------- MANUAL DRAW ---------- */
+
+function buildTeamFromNames(names){
+  return names.map(n=>BASE_PLAYERS.find(p=>p.name===n));
+}
+
+document.getElementById('manualBtn').addEventListener('click', ()=>{
+  manualState = {
+    assign: {},
+    coursePairs: [ {blue:[], red:[]}, {blue:[], red:[]}, {blue:[], red:[]} ]
+  };
+  BASE_PLAYERS.forEach(p=>manualState.assign[p.name]=null);
+  state = null;
+  clearStateStorage();
+  saveManualState();
+  document.getElementById('app').innerHTML='';
+  document.getElementById('lbSection').style.display='none';
+  document.getElementById('manualSetup').style.display='block';
+  renderManual();
+});
+
+function cycleAssign(name){
+  const counts = {blue:0, red:0};
+  Object.values(manualState.assign).forEach(v=>{ if(v) counts[v]++; });
+  const cur = manualState.assign[name];
+  let next = cur===null ? 'blue' : cur==='blue' ? 'red' : null;
+  if(next==='blue' && counts.blue>=4 && cur!=='blue') next='red';
+  if(next==='red' && counts.red>=4 && cur!=='red') next=null;
+  manualState.assign[name] = next;
+  saveManualState();
+  renderManual();
+}
+
+function getManualTeams(){
+  return {
+    blue: BASE_PLAYERS.filter(p=>manualState.assign[p.name]==='blue'),
+    red:  BASE_PLAYERS.filter(p=>manualState.assign[p.name]==='red')
+  };
+}
+
+// Returns the sorted-name keys of every partnership already locked in on earlier courses
+// for this side (includes both the explicit Pair 1 and its auto-derived Pair 2 complement)
+function usedPairKeysBeforeCourse(ci, side){
+  const teamArr = getManualTeams()[side];
+  const used = [];
+  for(let k=0; k<ci; k++){
+    const kcp = manualState.coursePairs[k][side];
+    if(kcp.length===2){
+      used.push(kcp.slice().sort().join('+'));
+      const complement = teamArr.filter(p=>!kcp.includes(p.name)).map(p=>p.name);
+      used.push(complement.slice().sort().join('+'));
+    }
+  }
+  return used;
+}
+
+function togglePair(ci, side, name){
+  const arr = manualState.coursePairs[ci][side];
+  const idx = arr.indexOf(name);
+  if(idx>-1){ arr.splice(idx,1); saveManualState(); renderManual(); return; }
+  arr.push(name);
+  if(arr.length>2) arr.shift();
+  if(arr.length===2){
+    const key = arr.slice().sort().join('+');
+    if(usedPairKeysBeforeCourse(ci, side).includes(key)){
+      arr.pop(); // block completing a repeat partnership — revert to the single prior selection
+    }
+  }
+  saveManualState();
+  renderManual();
+}
+
+function renderManual(){
+  const counts = {blue:0, red:0};
+  Object.values(manualState.assign).forEach(v=>{ if(v) counts[v]++; });
+
+  let html = `<div class="card"><h3 style="margin-top:0;">Step 1 — Pick teams</h3>
+    <p style="font-size:12.5px;color:#cfd8c9;margin-top:0;">Tap a player to cycle Unassigned → Blue → Red → Unassigned.</p>
+    <div class="chip-grid">`;
+  BASE_PLAYERS.forEach(p=>{
+    const v = manualState.assign[p.name];
+    const cls = v==='blue' ? 'chip-blue' : v==='red' ? 'chip-red' : 'chip-none';
+    html += `<div class="chip ${cls}" data-manual="assign" data-name="${p.name}">${p.name}<span style="opacity:.7;font-size:10px;">${p.hcp}</span></div>`;
+  });
+  html += `</div><div style="margin-top:8px;font-size:12px;color:#a9b0a0;">Blue: ${counts.blue}/4 &nbsp;·&nbsp; Red: ${counts.red}/4</div></div>`;
+
+  if(counts.blue===4 && counts.red===4){
+    const teamBlue = BASE_PLAYERS.filter(p=>manualState.assign[p.name]==='blue');
+    const teamRed  = BASE_PLAYERS.filter(p=>manualState.assign[p.name]==='red');
+
+    html += `<div class="card"><h3 style="margin-top:0;">Step 2 — Set each course's pairings</h3>
+      <p style="font-size:12.5px;color:#cfd8c9;margin-top:0;">Tap 2 Blue players for Pair 1 (the other 2 auto-become Pair 2), same for Red. Pair 1 plays Pair 1, Pair 2 plays Pair 2.</p>`;
+
+    let allDone = true;
+
+    for(let ci=0; ci<3; ci++){
+      const cp = manualState.coursePairs[ci];
+      html += `<div style="margin-top:14px;"><div class="nine-label" style="margin-top:0;">${COURSES[ci].name}</div>`;
+
+      const usedBlue = usedPairKeysBeforeCourse(ci, 'blue');
+      const usedRed  = usedPairKeysBeforeCourse(ci, 'red');
+
+      html += `<div style="font-size:11px;color:#8fb0e0;margin-bottom:4px;">BLUE — Pair 1 (tap 2)</div><div class="chip-grid">`;
+      teamBlue.forEach(p=>{
+        const sel = cp.blue.includes(p.name);
+        let blocked = false;
+        if(!sel && cp.blue.length===1){
+          const wouldBeKey = [cp.blue[0], p.name].sort().join('+');
+          blocked = usedBlue.includes(wouldBeKey);
+        }
+        const cls = sel ? 'chip-blue' : blocked ? 'chip-blocked' : 'chip-none';
+        const attrs = blocked ? '' : ` data-manual="pair" data-side="blue" data-ci="${ci}" data-name="${p.name}"`;
+        html += `<div class="chip chip-sm ${cls}"${attrs}>${p.name.split(' ')[0]}${blocked?' 🚫':''}</div>`;
+      });
+      html += `</div>`;
+
+      html += `<div style="font-size:11px;color:#e08fa0;margin:6px 0 4px;">RED — Pair 1 (tap 2)</div><div class="chip-grid">`;
+      teamRed.forEach(p=>{
+        const sel = cp.red.includes(p.name);
+        let blocked = false;
+        if(!sel && cp.red.length===1){
+          const wouldBeKey = [cp.red[0], p.name].sort().join('+');
+          blocked = usedRed.includes(wouldBeKey);
+        }
+        const cls = sel ? 'chip-red' : blocked ? 'chip-blocked' : 'chip-none';
+        const attrs = blocked ? '' : ` data-manual="pair" data-side="red" data-ci="${ci}" data-name="${p.name}"`;
+        html += `<div class="chip chip-sm ${cls}"${attrs}>${p.name.split(' ')[0]}${blocked?' 🚫':''}</div>`;
+      });
+      html += `</div>`;
+
+      if(cp.blue.length===2 && cp.red.length===2){
+        const bluePair2 = teamBlue.filter(p=>!cp.blue.includes(p.name)).map(p=>p.name);
+        const redPair2  = teamRed.filter(p=>!cp.red.includes(p.name)).map(p=>p.name);
+        html += `<div class="pending-msg" style="font-style:normal;color:#cfd8c9;">Pair 1: ${cp.blue.join(' & ')} vs ${cp.red.join(' & ')}<br>Pair 2: ${bluePair2.join(' & ')} vs ${redPair2.join(' & ')}</div>`;
+
+        const bKey = cp.blue.slice().sort().join('+');
+        const rKey = cp.red.slice().sort().join('+');
+        if(usedBlue.includes(bKey)) html += `<div class="warn-siren">🚨 That Blue pair already played together on an earlier course — pick a different combo 🚨</div>`;
+        if(usedRed.includes(rKey)) html += `<div class="warn-siren">🚨 That Red pair already played together on an earlier course — pick a different combo 🚨</div>`;
+      } else {
+        allDone = false;
+        html += `<div class="pending-msg">Pick exactly 2 for each side to lock this course in.</div>`;
+      }
+      html += `</div>`;
+    }
+    html += `</div>`;
+
+    if(allDone){
+      html += `<div class="draw-wrap"><button id="startManualBtn" class="startbtn">Start Tournament</button></div>`;
+    }
+  }
+
+  document.getElementById('manualSetup').innerHTML = html;
+
+  const startBtn = document.getElementById('startManualBtn');
+  if(startBtn){
+    startBtn.addEventListener('click', ()=>{
+      const teamBlue = BASE_PLAYERS.filter(p=>manualState.assign[p.name]==='blue');
+      const teamRed  = BASE_PLAYERS.filter(p=>manualState.assign[p.name]==='red');
+      const blueRounds = [], redRounds = [];
+      for(let ci=0; ci<3; ci++){
+        const cp = manualState.coursePairs[ci];
+        const bluePair1 = buildTeamFromNames(cp.blue);
+        const bluePair2 = teamBlue.filter(p=>!cp.blue.includes(p.name));
+        const redPair1  = buildTeamFromNames(cp.red);
+        const redPair2  = teamRed.filter(p=>!cp.red.includes(p.name));
+        blueRounds.push([bluePair1, bluePair2]);
+        redRounds.push([redPair1, redPair2]);
+      }
+      state = { teamBlue, teamRed, blueRounds, redRounds, results:{} };
+      manualState = null;
+      clearManualStorage();
+      saveState();
+      document.getElementById('manualSetup').style.display='none';
+      document.getElementById('manualSetup').innerHTML='';
+      document.getElementById('lbSection').style.display='block';
+      render();
+    });
+  }
+}
+
+function frontGroups(ci){
+  const br = state.blueRounds[ci], rr = state.redRounds[ci];
+  return [
+    {sideA:'blue', sideB:'red', pairA:br[0], pairB:rr[0]},
+    {sideA:'blue', sideB:'red', pairA:br[1], pairB:rr[1]}
+  ];
+}
+
+function getRes(key){ return state.results[key] || null; }
+function setRes(key, val){
+  state.results[key] = (state.results[key]===val) ? null : val;
+  saveState();
+  render();
+}
+
+function backGroups(ci){
+  const f = frontGroups(ci);
+  const r1 = getRes(`c${ci}-front-g1-fourball`);
+  const r2 = getRes(`c${ci}-front-g2-fourball`);
+  if(r1 && r2 && r1!=='halve' && r2!=='halve'){
+    const w1 = r1==='a' ? {side:f[0].sideA,pair:f[0].pairA} : {side:f[0].sideB,pair:f[0].pairB};
+    const l1 = r1==='a' ? {side:f[0].sideB,pair:f[0].pairB} : {side:f[0].sideA,pair:f[0].pairA};
+    const w2 = r2==='a' ? {side:f[1].sideA,pair:f[1].pairA} : {side:f[1].sideB,pair:f[1].pairB};
+    const l2 = r2==='a' ? {side:f[1].sideB,pair:f[1].pairB} : {side:f[1].sideA,pair:f[1].pairA};
+    return {
+      mode:'rebracket',
+      winners:{sideA:w1.side, sideB:w2.side, pairA:w1.pair, pairB:w2.pair},
+      losers:{sideA:l1.side, sideB:l2.side, pairA:l1.pair, pairB:l2.pair}
+    };
+  }
+  return {mode:'replay', g1:f[0], g2:f[1]};
+}
+
+function allGroupsForCourse(ci){
+  const f = frontGroups(ci);
+  const groups = [
+    {key:`c${ci}-front-g1`, label:'Front 9 · Group 1', ...f[0]},
+    {key:`c${ci}-front-g2`, label:'Front 9 · Group 2', ...f[1]}
+  ];
+  const b = backGroups(ci);
+  if(b.mode==='rebracket'){
+    groups.push({key:`c${ci}-back-winners`, label:'Back 9 · Winners bracket', ...b.winners});
+    groups.push({key:`c${ci}-back-losers`, label:'Back 9 · Losers bracket', ...b.losers});
+  } else {
+    groups.push({key:`c${ci}-back-g1`, label:'Back 9 · Group 1 (replay — front 9 halved or pending)', ...b.g1});
+    groups.push({key:`c${ci}-back-g2`, label:'Back 9 · Group 2 (replay — front 9 halved or pending)', ...b.g2});
+  }
+  return groups;
+}
+
+function computeStandings(){
+  const teamPts = {blue:0, red:0};
+  const personal = {};
+  BASE_PLAYERS.forEach(p=>personal[p.name]=0);
+
+  for(let ci=0; ci<3; ci++){
+    allGroupsForCourse(ci).forEach(g=>{
+      const interTeam = g.sideA !== g.sideB; // false when a rebracket pits two same-team pairs together
+      const fbRes = getRes(`${g.key}-fourball`);
+      if(interTeam){
+        if(fbRes==='a'){ teamPts[g.sideA]+=2; }
+        else if(fbRes==='b'){ teamPts[g.sideB]+=2; }
+        else if(fbRes==='halve'){ teamPts[g.sideA]+=1; teamPts[g.sideB]+=1; }
+      }
+
+      if(singlesEnabled){
+        [[g.pairA[0],g.pairB[0],0],[g.pairA[1],g.pairB[1],1]].forEach(([pA,pB,idx])=>{
+          const sRes = getRes(`${g.key}-singles${idx}`);
+          if(sRes==='a'){ personal[pA.name]+=1; if(interTeam) teamPts[g.sideA]+=0.5; }
+          else if(sRes==='b'){ personal[pB.name]+=1; if(interTeam) teamPts[g.sideB]+=0.5; }
+          else if(sRes==='halve'){ personal[pA.name]+=0.5; personal[pB.name]+=0.5; if(interTeam){ teamPts[g.sideA]+=0.25; teamPts[g.sideB]+=0.25; } }
+        });
+      }
+    });
+  }
+  return {teamPts, personal};
+}
+
+function sideTag(side){ return `<span class="side-tag ${side}">${side==='blue'?'Blue':'Red'}</span>`; }
+
+function fbButtons(key, g){
+  const res = getRes(key);
+  const clsA = g.sideA==='blue' ? 'active-blue' : 'active-red';
+  const clsB = g.sideB==='blue' ? 'active-blue' : 'active-red';
+  const nameA = g.pairA.map(p=>p.name.split(' ')[0]).join('+');
+  const nameB = g.pairB.map(p=>p.name.split(' ')[0]).join('+');
+  return `<div class="btnrow">
+    <div class="rbtn ${res==='a'?clsA:''}" data-key="${key}" data-val="a">◀ ${nameA} win</div>
+    <div class="rbtn ${res==='halve'?'active-halve':''}" data-key="${key}" data-val="halve">Halved</div>
+    <div class="rbtn ${res==='b'?clsB:''}" data-key="${key}" data-val="b">${nameB} win ▶</div>
+  </div>`;
+}
+
+function singlesButtons(key, pA, pB, sideA, sideB){
+  const res = getRes(key);
+  const clsA = sideA==='blue' ? 'active-blue' : 'active-red';
+  const clsB = sideB==='blue' ? 'active-blue' : 'active-red';
+  return `<div class="btnrow">
+    <div class="rbtn ${res==='a'?clsA:''}" data-key="${key}" data-val="a">${pA.name.split(' ')[0]}</div>
+    <div class="rbtn ${res==='halve'?'active-halve':''}" data-key="${key}" data-val="halve">Halved</div>
+    <div class="rbtn ${res==='b'?clsB:''}" data-key="${key}" data-val="b">${pB.name.split(' ')[0]}</div>
+  </div>`;
+}
+
+function renderGroup(g, ci){
+  const fbKey = `${g.key}-fourball`;
+  const interTeam = g.sideA !== g.sideB;
+  let html = `<div class="matchgroup">
+    <div class="singles-title">${g.label}${interTeam?'':' — same-team decider (personal pride only)'}</div>
+    <div class="fb-row">
+      <div class="pair">${sideTag(g.sideA)}<br>${g.pairA[0].name} (+${fourballStrokes(g.pairA[0].name, ci)})<br>${g.pairA[1].name} (+${fourballStrokes(g.pairA[1].name, ci)})</div>
+      <div class="vs">VS</div>
+      <div class="pair" style="text-align:right;">${sideTag(g.sideB)}<br>${g.pairB[0].name} (+${fourballStrokes(g.pairB[0].name, ci)})<br>${g.pairB[1].name} (+${fourballStrokes(g.pairB[1].name, ci)})</div>
+    </div>
+    ${!interTeam ? `<div class="pending-msg" style="color:#e0a53e;">⚠️ Both pairs are the same team — no team points on this one, just Daily Champion / Wooden Spoon bragging rights${singlesEnabled?' and personal singles points below':''}.</div>` : ''}
+    ${fbButtons(fbKey, g)}
+    ${singlesEnabled ? `
+    <div class="singles-row">
+      <div class="singles-title">Singles 1 · ${g.pairA[0].name.split(' ')[0]} (+${singlesStrokes(g.pairA[0].name, ci)}) vs ${g.pairB[0].name.split(' ')[0]} (+${singlesStrokes(g.pairB[0].name, ci)})</div>
+      ${singlesButtons(`${g.key}-singles0`, g.pairA[0], g.pairB[0], g.sideA, g.sideB)}
+    </div>
+    <div class="singles-row">
+      <div class="singles-title">Singles 2 · ${g.pairA[1].name.split(' ')[0]} (+${singlesStrokes(g.pairA[1].name, ci)}) vs ${g.pairB[1].name.split(' ')[0]} (+${singlesStrokes(g.pairB[1].name, ci)})</div>
+      ${singlesButtons(`${g.key}-singles1`, g.pairA[1], g.pairB[1], g.sideA, g.sideB)}
+    </div>` : ''}
+  </div>`;
+  return html;
+}
+
+function render(){
+  const sc = computeStandings();
+  document.getElementById('sbBlue').textContent = sc.teamPts.blue;
+  document.getElementById('sbRed').textContent = sc.teamPts.red;
+
+  const app = document.getElementById('app');
+  let html = '';
+
+  html += `<div class="card"><div class="teams-row">
+    <div class="team-box blue"><h3>Team Blue</h3><ul>${state.teamBlue.map(p=>`<li>${p.name}<span class="hcp">${p.hcp}</span></li>`).join('')}</ul></div>
+    <div class="team-box red"><h3>Team Red</h3><ul>${state.teamRed.map(p=>`<li>${p.name}<span class="hcp">${p.hcp}</span></li>`).join('')}</ul></div>
+  </div></div>`;
+
+  for(let ci=0; ci<3; ci++){
+    const course = COURSES[ci];
+    html += `<div class="course-head"><h2>${course.name}</h2><div class="course-num">Course ${ci+1} of 3</div></div>`;
+    html += `<div class="pending-msg" style="font-style:normal; color:#cfd8c9;">
+      ${course.date} · Tee ${course.teeTime} (Group 2 ≈ ${course.teeTimeGroup2Est}, estimated)<br>
+      ${course.transferNote
+        ? `${course.transferNote}${course.transferPickupEst ? ` — <span class="estimate-red">estimate: pick up ≈${course.transferPickupEst}, return ≈${course.transferReturnEst}</span>` : ''}`
+        : `Golf transfer — pick up ${course.transferPickup}, return ${course.transferReturn}${course.transferReturnWas ? ` (was ${course.transferReturnWas})` : ''}${course.transferReturnLocation ? ` from ${course.transferReturnLocation}` : ''}${course.transferReturnTBD ? ' <span class="estimate-red">(TBD)</span>' : ''}`}
+    </div>`;
+    const adjNotes = getAdjustmentSummary(ci);
+    if(adjNotes.length){
+      html += `<div class="pending-msg" style="color:var(--gold); font-style:normal;">Index adjustments in effect: ${adjNotes.join(' · ')}</div>`;
+    }
+    const b = backGroups(ci);
+    allGroupsForCourse(ci).forEach(g=>{ html += renderGroup(g, ci); });
+
+    if(b.mode==='rebracket'){
+      const wRes = getRes(`c${ci}-back-winners-fourball`);
+      const lRes = getRes(`c${ci}-back-losers-fourball`);
+      if(wRes && wRes!=='halve'){
+        const champs = wRes==='a' ? b.winners.pairA : b.winners.pairB;
+        html += `<div class="bracket-result">🏆 Daily Champions: ${champs[0].name} &amp; ${champs[1].name} (−1 shot each from here on)</div>`;
+      }
+      if(lRes && lRes!=='halve'){
+        const spoon = lRes==='a' ? b.losers.pairB : b.losers.pairA;
+        html += `<div class="bracket-result">🥄 Wooden Spoon: ${spoon[0].name} &amp; ${spoon[1].name} (+1 shot each from here on)</div>`;
+      }
+    }
+  }
+
+  app.innerHTML = html;
+
+  const lbSection = document.getElementById('lbSection');
+  if(singlesEnabled){
+    lbSection.style.display = 'block';
+    const rows = Object.entries(sc.personal).sort((a,b)=>b[1]-a[1]);
+    const lb = document.getElementById('singlesLB');
+    lb.innerHTML = '<tr><th>Player</th><th>Pts</th></tr>' + rows.map(([name,pts])=>`<tr><td class="pname">${name}</td><td class="pt">${pts}</td></tr>`).join('');
+  } else {
+    lbSection.style.display = 'none';
+  }
+}
+
+document.body.addEventListener('click', (e)=>{
+  const btn = e.target.closest('[data-key]');
+  if(btn){ setRes(btn.dataset.key, btn.dataset.val); return; }
+
+  const manualBtn = e.target.closest('[data-manual]');
+  if(manualBtn){
+    if(manualBtn.dataset.manual==='assign'){ cycleAssign(manualBtn.dataset.name); }
+    else if(manualBtn.dataset.manual==='pair'){ togglePair(parseInt(manualBtn.dataset.ci), manualBtn.dataset.side, manualBtn.dataset.name); }
+    return;
+  }
+
+  if(e.target.closest('#resetBtn')){
+    if(confirm('Reset everything — teams, results, and index edits? This can\'t be undone.')){
+      resetEverything();
+    }
+  }
+});
+
+/* ---------- RESTORE ON LOAD ---------- */
+(function initFromStorage(){
+  try{
+    const setRaw = localStorage.getItem(LS_SETTINGS);
+    if(setRaw){
+      const s = JSON.parse(setRaw);
+      if(typeof s.singlesEnabled === 'boolean') singlesEnabled = s.singlesEnabled;
+      renderFormatStatus();
+    }
+  }catch(e){}
+
+  try{
+    const hcpRaw = localStorage.getItem(LS_HCP);
+    if(hcpRaw){
+      const overrides = JSON.parse(hcpRaw);
+      BASE_PLAYERS.forEach(p=>{ if(typeof overrides[p.name]==='number') p.hcp = overrides[p.name]; });
+      refreshHcpTables();
+      renderIndexEditor();
+    }
+  }catch(e){}
+
+  try{
+    const stRaw = localStorage.getItem(LS_STATE);
+    if(stRaw){
+      const d = JSON.parse(stRaw);
+      const byName = n=>BASE_PLAYERS.find(p=>p.name===n);
+      state = {
+        teamBlue: d.teamBlueNames.map(byName),
+        teamRed: d.teamRedNames.map(byName),
+        blueRounds: d.blueRoundsNames.map(r=>r.map(pair=>pair.map(byName))),
+        redRounds: d.redRoundsNames.map(r=>r.map(pair=>pair.map(byName))),
+        results: d.results || {}
+      };
+      document.getElementById('lbSection').style.display='block';
+      render();
+      return; // a tournament is already running — don't also try to restore manual setup
+    }
+  }catch(e){}
+
+  try{
+    const msRaw = localStorage.getItem(LS_MANUAL);
+    if(msRaw){
+      manualState = JSON.parse(msRaw);
+      document.getElementById('manualSetup').style.display='block';
+      renderManual();
+    }
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
